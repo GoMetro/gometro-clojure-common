@@ -74,7 +74,7 @@
       (-service/as-service
        (cond-> {:cli-args            args
                 :config-file         (get config-files config-file)
-                :log-component-setup {:log-component-kw                :afrolabs.gometro-bridge.logging/timbre
+                :log-component-setup {:log-component-kw                :gometro.common.logging/timbre
                                       :log-component-dependencies-pred #{:afrolabs.components.aws.client-config/aws-client-config}}}
          ig-cfg-ks (assoc :ig-cfg-ks ig-cfg-ks)))
       (System/exit 0))
