@@ -1,0 +1,5 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure             {:mvn/version "1.12.0"}
+        com.github.gometro/afrolabs-clj {:git/url "git@github.com:GoMetro/afrolabs-clj.git"
+                                         :git/sha "7b0a1abd586a5242c9e31bf28690d954ed624631"}}
+ }
