@@ -18,8 +18,11 @@
          "|"
          common-timestamp-part fractions-of-second-part timezone-part)))
 
-(def regex:instant-string [:re {:id                 "regex-instant-string"
+(def regex-instant-string [:re {:id                 "regex-instant-string"
                                 :description        "A string representing an instant in time, formatted as ISO8601. It is validated using a regular expression."
                                 :error/message      "Requires an ISO 8601 formatted datetime string, example \"1111-11-11T11:11:11Z\"."
                                 :json-schema/type   "string"}
                            valid-instant?-regex-string])
+
+(def regex:instant-string regex-instant-string) ;; backward compatibility shim
+(def regex_instant_string regex-instant-string) ;; simple-characters only shim
