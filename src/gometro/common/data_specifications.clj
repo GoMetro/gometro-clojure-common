@@ -26,3 +26,9 @@
 
 (def regex:instant-string regex-instant-string) ;; backward compatibility shim
 (def regex_instant_string regex-instant-string) ;; simple-characters only shim
+
+(def regex-date-string [:re {:id               "regex-date-string"
+                             :description      "A string representing a UTC date, formatted as ISO8601. Validated using a regular expression."
+                             :error/message    "Requires an ISO 8601 formatted Date in UTC, example \"1234-56-78\"."
+                             :json-schema/type "string"}
+                        "\\d{4}-\\d{2}-\\d{2}"])
