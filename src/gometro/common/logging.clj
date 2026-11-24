@@ -3,16 +3,30 @@
    [afrolabs.spec :as -spec]
    [afrolabs.logging :as -logging]
    [afrolabs.aws.cloudwatch-logs :as -cloudwatch-logs]
+   [afrolabs.components.sentry :as -sentry]
    [taoensso.timbre :as log]
    [timbre-json-appender.core]
    [integrant.core :as ig]
    [clojure.spec.alpha :as s]
    [cognitect.aws.client.api :as aws]))
 
+(def ^:private timbre-levels #{:trace :debug :info :warn :error :fatal :report})
+
+(s/def ::ns-pattern (s/or :string  string?
+                          :strings (s/coll-of string?)
+                          :regex   #(instance? java.util.regex.Pattern %)))
+
+;; A level, or timbre's namespace filter: [[ns-pattern level] ...]
+(s/def ::min-level (s/or :level     timbre-levels
+                         :ns-filter (s/coll-of (s/tuple ::ns-pattern timbre-levels)
+                                               :kind vector?)))
+
 (s/def ::colorized-output? boolean?)
+(s/def ::colorized-output boolean?)
 
 (s/def ::println
-  (s/keys :req-un [::colorized-output?]))
+  (s/keys :opt-un [::colorized-output?
+                   ::colorized-output]))
 
 (s/def ::aws-client-cfg map?)
 (s/def ::disabled? boolean?)
@@ -25,11 +39,20 @@
                    ::aws-client-cfg
                    ::disabled?]))
 
+;; nil when the sentry component is `:disabled?`
+(s/def ::client (s/nilable map?))
+(s/def ::tag-keys (s/coll-of (s/or :keyword keyword? :string string?)))
+
+(s/def ::sentry
+  (s/keys :req-un [::client]
+          :opt-un [::min-level
+                   ::tag-keys]))
+
 (s/def ::appenders
   (s/keys :req-un []
           :opt-un [::println
                    ::cloudwatch
-                   #_::sentry]))
+                   ::sentry]))
 (s/def ::logging-cfg
   (s/keys :req-un [::min-level
                    ::appenders]))
@@ -40,7 +63,7 @@
   (let [{:keys              [min-level]
          {:keys [println
                  cloudwatch
-                 #_sentry]} :appenders} log-config
+                 sentry]} :appenders} log-config
         aws-log-dispatcher (if (or (not cloudwatch)
                                    (:disabled? cloudwatch))
                              (constantly nil)
@@ -57,7 +80,9 @@
                         :appenders
                         (cond-> {}
                           println
-                          (assoc :println (-logging/context-println-appender :colorized-output? (:colorized-output println)))
+                          (assoc :println (-logging/context-println-appender
+                                           :colorized-output? (boolean (get println :colorized-output?
+                                                                            (:colorized-output println)))))
 
                           cloudwatch
                           (assoc :cloudwatch {:output-fn (timbre-json-appender.core/make-json-output-fn {:msg-key             :message
@@ -67,13 +92,14 @@
                                                            (aws-log-dispatcher {:message   (force output_)
                                                                                 :timestamp (.getTime instant)}))})
 
+                          sentry
+                          (assoc :sentry (-sentry/timbre-appender (:client sentry)
+                                                                  (select-keys sentry [:min-level :tag-keys]))))})
 
-
-                          #_#_sentry
-                          (assoc :sentry (sentry-appender sentry-service)))})
-
+    ;; :println stays, so logging still prints between dev-stop! and dev-start!
     {:cleanup #(do (aws-log-dispatcher :stop)
-                   (log/merge-config! {:appenders {:cloudwatch nil}}))}))
+                   (log/merge-config! {:appenders {:cloudwatch nil
+                                                   :sentry     nil}}))}))
 
 (defmethod ig/halt-key! ::timbre
   [_ {:keys [cleanup]}]
