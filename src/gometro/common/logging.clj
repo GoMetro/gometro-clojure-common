@@ -95,6 +95,7 @@
                           sentry
                           (assoc :sentry (-sentry/timbre-appender (:client sentry)
                                                                   (select-keys sentry [:min-level :tag-keys]))))})
+    (-logging/install-skip-appenders!)
 
     ;; :println stays, so logging still prints between dev-stop! and dev-start!
     {:cleanup #(do (aws-log-dispatcher :stop)
