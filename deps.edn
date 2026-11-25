@@ -1,7 +1,7 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure             {:mvn/version "1.12.5"}
         com.github.gometro/afrolabs-clj {:git/url "git@github.com:GoMetro/afrolabs-clj.git"
-                                         :git/sha "5ed5d66d6983aca5fb410fbd1e735c315e19d1f5"}
+                                         :git/sha "911e0da922b14c46c76640dadc9199a41fe63f60"}
         ;; afrolabs.components.sentry needs it; afrolabs-clj does not bring it in
         io.sentry/sentry                {:mvn/version "8.65.1"}}
  }
